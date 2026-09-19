@@ -65,7 +65,9 @@ export const GameSocketProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Initialize socket connection
   useEffect(() => {
-    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin;
+    const socketUrl =
+      (import.meta as any).env?.VITE_SERVER_URL ||
+      (window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin);
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       autoConnect: true,

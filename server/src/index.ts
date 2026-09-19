@@ -2,6 +2,9 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -10,6 +13,9 @@ import { WordManager } from './words/wordManager.js';
 import { RoomManager } from './rooms/RoomManager.js';
 import { registerRoomHandlers } from './socket/roomHandlers.js';
 import { registerGameHandlers } from './socket/gameHandlers.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
@@ -20,6 +26,18 @@ app.use(express.json());
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
+
+// Serve frontend static assets if built
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/socket.io') || req.path.startsWith('/health')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 const httpServer = createServer(app);
 
